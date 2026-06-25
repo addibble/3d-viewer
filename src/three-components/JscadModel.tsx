@@ -23,6 +23,7 @@ export const JscadModel = ({
   isHovered,
   scale,
   isTranslucent = false,
+  opacity = 1,
 }: {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
@@ -37,6 +38,8 @@ export const JscadModel = ({
   isHovered: boolean
   scale?: number
   isTranslucent?: boolean
+  /** Per-part opacity in [0,1]; 1 = opaque, <1 = transparent. */
+  opacity?: number
 }) => {
   const { threeGeom, material } = useMemo(() => {
     const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
@@ -67,6 +70,19 @@ export const JscadModel = ({
     })
     return createdMesh
   }, [threeGeom, material, isTranslucent])
+
+  // Apply per-part opacity by mutating the material (avoids rebuilding the
+  // geometry on every slider tick). Translucent models are capped at 0.5.
+  useEffect(() => {
+    if (!material || !mesh) return
+    const effectiveOpacity = isTranslucent ? Math.min(opacity, 0.5) : opacity
+    const isTransparent = effectiveOpacity < 1
+    material.transparent = isTransparent
+    material.opacity = effectiveOpacity
+    material.depthWrite = !isTransparent
+    material.needsUpdate = true
+    mesh.renderOrder = isTransparent ? 2 : 1
+  }, [material, mesh, opacity, isTranslucent])
   const { boardTransformGroup } = useCadModelTransformGraph({
     model: mesh,
     position: positionOffset,

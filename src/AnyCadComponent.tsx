@@ -6,6 +6,7 @@ import type {
 } from "circuit-json"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { getPartKey, usePartAppearance } from "./contexts/PartAppearanceContext"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Html } from "./react-three/Html"
 import { FootprinterModel } from "./three-components/FootprinterModel"
@@ -53,6 +54,8 @@ export const AnyCadComponent = ({
   const pcbThickness = usePcbThickness(circuitJson)
   const [isHovered, setIsHovered] = useState(false)
   const { visibility } = useLayerVisibility()
+  const { getOpacity } = usePartAppearance()
+  const partOpacity = getOpacity(getPartKey(cad_component))
   const [hoverPosition, setHoverPosition] = useState<
     [number, number, number] | null
   >(null)
@@ -288,6 +291,7 @@ export const AnyCadComponent = ({
         onUnhover={handleUnhover}
         isHovered={isHovered}
         isTranslucent={cad_component.show_as_translucent_model}
+        opacity={partOpacity}
       />
     )
   } else if (cad_component.footprinter_string) {
@@ -303,6 +307,11 @@ export const AnyCadComponent = ({
         isTranslucent={cad_component.show_as_translucent_model}
       />
     )
+  }
+
+  // Per-part opacity of 0 hides the part entirely (regardless of category).
+  if (partOpacity <= 0) {
+    return null
   }
 
   // Check if models should be visible

@@ -1,5 +1,6 @@
 import type React from "react"
 import { useState } from "react"
+import type { AnyCircuitElement } from "circuit-json"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/cameraAnimation"
@@ -11,6 +12,7 @@ import { zIndexMap } from "../../lib/utils/z-index-map"
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
   menuPos: { x: number; y: number }
+  circuitJson?: AnyCircuitElement[]
   engine: "jscad" | "manifold"
   cameraPreset: CameraPreset
   autoRotate: boolean
@@ -102,6 +104,7 @@ const badgeStyles: React.CSSProperties = {
 export const ContextMenu: React.FC<ContextMenuProps> = ({
   menuRef,
   menuPos,
+  circuitJson,
   engine,
   cameraPreset,
   autoRotate,
@@ -260,7 +263,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu />
+            <AppearanceMenu circuitJson={circuitJson} />
 
             <DropdownMenu.Separator style={separatorStyles} />
 

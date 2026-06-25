@@ -15,6 +15,26 @@ export const CheckIcon = () => (
   </svg>
 )
 
+// Tri-state "partially visible" mark — U+237B (NOT CHECK MARK).
+// Used by the Appearance menu to indicate a part rendered at 50% opacity.
+export const NotCheckIcon = () => (
+  <span
+    aria-hidden
+    style={{
+      width: 14,
+      height: 14,
+      fontSize: 15,
+      lineHeight: "14px",
+      fontWeight: 600,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    {"\u237B"}
+  </span>
+)
+
 // Arrow icon component
 export const ChevronRightIcon = ({ isOpen }: { isOpen: boolean }) => (
   <svg

@@ -27,6 +27,7 @@ import {
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
 import { RenderingModeProvider } from "./contexts/RenderingModeContext"
+import { PartAppearanceProvider } from "./contexts/PartAppearanceContext"
 import {
   CameraControllerProvider,
   useCameraController,
@@ -275,6 +276,7 @@ const CadViewerInner = (props: any) => {
         <ContextMenu
           menuRef={menuRef}
           menuPos={menuPos}
+          circuitJson={props.circuitJson}
           engine={engine}
           cameraPreset={cameraPreset}
           autoRotate={autoRotate}
@@ -314,9 +316,11 @@ export const CadViewer = (props: any) => {
     >
       <LayerVisibilityProvider>
         <RenderingModeProvider>
-          <ToastProvider>
-            <CadViewerInner {...props} />
-          </ToastProvider>
+          <PartAppearanceProvider>
+            <ToastProvider>
+              <CadViewerInner {...props} />
+            </ToastProvider>
+          </PartAppearanceProvider>
         </RenderingModeProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>

@@ -1,9 +1,14 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import type { AnyCircuitElement } from "circuit-json"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useRenderingMode } from "../contexts/RenderingModeContext"
+import {
+  getPartKey,
+  usePartAppearance,
+} from "../contexts/PartAppearanceContext"
 import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { CheckIcon, ChevronRightIcon } from "./Icons"
+import { CheckIcon, ChevronRightIcon, NotCheckIcon } from "./Icons"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 
 const itemStyles: React.CSSProperties = {
@@ -60,11 +65,52 @@ const iconContainerStyles: React.CSSProperties = {
   flexShrink: 0,
 }
 
-export const AppearanceMenu = () => {
+interface EnclosurePartRow {
+  key: string
+  label: string
+}
+
+/**
+ * Tri-state opacity cycle for an enclosure part. Clicking dims the part each
+ * time, wrapping back to fully visible:
+ *   visible (1) → 50% (0.5) → hidden (0) → visible (1)
+ */
+const nextPartOpacity = (opacity: number): number => {
+  if (opacity >= 1) return 0.5
+  if (opacity > 0) return 0
+  return 1
+}
+
+export const AppearanceMenu = ({
+  circuitJson,
+}: {
+  circuitJson?: AnyCircuitElement[]
+}) => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const { lightingEnabled, setLightingEnabled } = useRenderingMode()
+  const { getOpacity, setOpacity } = usePartAppearance()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+
+  // Enclosure parts are cad_components tagged (by the pcb-enclosure package)
+  // with a stable `enclosure_part_id` + human-readable `name`. They get a
+  // tri-state opacity control so a closed shell can be faded/hidden to inspect
+  // the PCB inside.
+  const enclosureParts = useMemo<EnclosurePartRow[]>(() => {
+    if (!circuitJson) return []
+    const seen = new Set<string>()
+    const rows: EnclosurePartRow[] = []
+    for (const element of circuitJson) {
+      if (element.type !== "cad_component") continue
+      const partId = (element as any).enclosure_part_id
+      if (!partId) continue
+      const key = getPartKey(element)
+      if (seen.has(key)) continue
+      seen.add(key)
+      rows.push({ key, label: (element as any).name ?? String(partId) })
+    }
+    return rows
+  }, [circuitJson])
 
   return (
     <>
@@ -392,6 +438,39 @@ export const AppearanceMenu = () => {
                 Through-Hole Components
               </span>
             </DropdownMenu.Item>
+
+            {enclosureParts.length > 0 && (
+              <DropdownMenu.Separator style={separatorStyles} />
+            )}
+            {enclosureParts.map((part) => {
+              const opacity = getOpacity(part.key)
+              return (
+                <DropdownMenu.Item
+                  key={part.key}
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === part.key ? "#404040" : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setOpacity(part.key, nextPartOpacity(opacity))
+                  }}
+                  onMouseEnter={() => setHoveredItem(part.key)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem(part.key)}
+                >
+                  <span style={iconContainerStyles}>
+                    {opacity >= 1 && <CheckIcon />}
+                    {opacity > 0 && opacity < 1 && <NotCheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    {part.label}
+                  </span>
+                </DropdownMenu.Item>
+              )
+            })}
           </DropdownMenu.SubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>
