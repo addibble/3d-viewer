@@ -4,6 +4,7 @@ import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useRenderingMode } from "../contexts/RenderingModeContext"
 import {
   getPartKey,
+  nextPartOpacity,
   usePartAppearance,
 } from "../contexts/PartAppearanceContext"
 import type React from "react"
@@ -68,17 +69,6 @@ const iconContainerStyles: React.CSSProperties = {
 interface EnclosurePartRow {
   key: string
   label: string
-}
-
-/**
- * Tri-state opacity cycle for an enclosure part. Clicking dims the part each
- * time, wrapping back to fully visible:
- *   visible (1) → 50% (0.5) → hidden (0) → visible (1)
- */
-const nextPartOpacity = (opacity: number): number => {
-  if (opacity >= 1) return 0.5
-  if (opacity > 0) return 0
-  return 1
 }
 
 export const AppearanceMenu = ({

@@ -41,6 +41,16 @@ export const getPartKey = (cadComponent: any): string => {
 export const getDefaultOpacity = (key: string): number =>
   key.startsWith(ENCLOSURE_PART_KEY_PREFIX) ? DEFAULT_ENCLOSURE_PART_OPACITY : 1
 
+/**
+ * Tri-state opacity cycle for a part. Each click dims the part, wrapping back to
+ * fully visible:  visible (1) → 50% (0.5) → hidden (0) → visible (1).
+ */
+export const nextPartOpacity = (opacity: number): number => {
+  if (opacity >= 1) return DEFAULT_ENCLOSURE_PART_OPACITY
+  if (opacity > 0) return 0
+  return 1
+}
+
 interface PartAppearanceContextType {
   /** Opacity in [0,1] for a part key; see `getDefaultOpacity` for defaults. */
   getOpacity: (key: string) => number
