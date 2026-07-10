@@ -5,6 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/cameraAnimation"
 import { useCameraController } from "../contexts/CameraControllerContext"
+import { useEnclosureExplodedView } from "../contexts/EnclosureExplodedViewContext"
 import packageJson from "../../package.json"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 import { zIndexMap } from "../../lib/utils/z-index-map"
@@ -115,8 +116,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
+  const { exploded, setExploded } = useEnclosureExplodedView()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const hasExplodableEnclosure = circuitJson?.some(
+    (element: any) =>
+      element.type === "cad_component" &&
+      typeof element.enclosure_explode_z_offset_mm === "number" &&
+      element.enclosure_explode_z_offset_mm > 0,
+  )
 
   return (
     <div
@@ -264,6 +272,33 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
             {/* Appearance Menu */}
             <AppearanceMenu circuitJson={circuitJson} />
+
+            {hasExplodableEnclosure && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  backgroundColor:
+                    hoveredItem === "exploded-enclosure"
+                      ? "#404040"
+                      : "transparent",
+                }}
+                onSelect={(e) => e.preventDefault()}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  setExploded(!exploded)
+                }}
+                onMouseEnter={() => setHoveredItem("exploded-enclosure")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("exploded-enclosure")}
+              >
+                <span style={iconContainerStyles}>
+                  {exploded && <CheckIcon />}
+                </span>
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  Exploded Enclosure
+                </span>
+              </DropdownMenu.Item>
+            )}
 
             <DropdownMenu.Separator style={separatorStyles} />
 

@@ -7,6 +7,10 @@ import type {
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import { getPartKey, usePartAppearance } from "./contexts/PartAppearanceContext"
+import {
+  getEnclosureExplodeZOffset,
+  useEnclosureExplodedView,
+} from "./contexts/EnclosureExplodedViewContext"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Html } from "./react-three/Html"
 import { FootprinterModel } from "./three-components/FootprinterModel"
@@ -55,6 +59,7 @@ export const AnyCadComponent = ({
   const [isHovered, setIsHovered] = useState(false)
   const { visibility } = useLayerVisibility()
   const { getOpacity } = usePartAppearance()
+  const { exploded } = useEnclosureExplodedView()
   const partOpacity = getOpacity(getPartKey(cad_component))
   const [hoverPosition, setHoverPosition] = useState<
     [number, number, number] | null
@@ -142,7 +147,13 @@ export const AnyCadComponent = ({
   )
 
   const rotationOffset = tuple(...modelTransform.rotation)
-  const adjustedPosition = modelTransform.position
+  const explodeZOffset = getEnclosureExplodeZOffset(cad_component, exploded)
+  const basePosition = modelTransform.position ?? [0, 0, 0]
+  const adjustedPosition = tuple(
+    basePosition[0],
+    basePosition[1],
+    basePosition[2] + explodeZOffset,
+  )
 
   const fallbackModelComponents = useMemo(() => {
     const components: React.ReactNode[] = []

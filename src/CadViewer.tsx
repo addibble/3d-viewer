@@ -28,6 +28,7 @@ import {
 } from "./contexts/LayerVisibilityContext"
 import { RenderingModeProvider } from "./contexts/RenderingModeContext"
 import { PartAppearanceProvider } from "./contexts/PartAppearanceContext"
+import { EnclosureExplodedViewProvider } from "./contexts/EnclosureExplodedViewContext"
 import {
   CameraControllerProvider,
   useCameraController,
@@ -316,11 +317,13 @@ export const CadViewer = (props: any) => {
     >
       <LayerVisibilityProvider>
         <RenderingModeProvider>
-          <PartAppearanceProvider>
-            <ToastProvider>
-              <CadViewerInner {...props} />
-            </ToastProvider>
-          </PartAppearanceProvider>
+          <EnclosureExplodedViewProvider>
+            <PartAppearanceProvider>
+              <ToastProvider>
+                <CadViewerInner {...props} />
+              </ToastProvider>
+            </PartAppearanceProvider>
+          </EnclosureExplodedViewProvider>
         </RenderingModeProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
