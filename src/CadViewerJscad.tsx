@@ -1,5 +1,5 @@
 import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, CadFdmEnclosure } from "circuit-json"
 import type * as React from "react"
 import { forwardRef, useMemo } from "react"
 import type * as THREE from "three"
@@ -11,6 +11,7 @@ import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
+import { CadFdmEnclosureModel } from "./three-components/CadFdmEnclosureModel"
 import { Error3d } from "./three-components/Error3d"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -129,6 +130,12 @@ export const CadViewerJscad = forwardRef<
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
     const cad_components = su(internalCircuitJson).cad_component.list()
+    const cad_fdm_enclosures = (
+      internalCircuitJson as Array<{ type: string }>
+    ).filter(
+      (element): element is CadFdmEnclosure =>
+        element.type === "cad_fdm_enclosure",
+    )
 
     return (
       <CadViewerContainer
@@ -169,6 +176,14 @@ export const CadViewerJscad = forwardRef<
               circuitJson={internalCircuitJson}
               resolveStaticAsset={resolveStaticAsset}
             />
+          </ThreeErrorBoundary>
+        ))}
+        {cad_fdm_enclosures.map((cad_fdm_enclosure) => (
+          <ThreeErrorBoundary
+            key={cad_fdm_enclosure.cad_fdm_enclosure_id}
+            fallback={() => null}
+          >
+            <CadFdmEnclosureModel cad_fdm_enclosure={cad_fdm_enclosure} />
           </ThreeErrorBoundary>
         ))}
       </CadViewerContainer>

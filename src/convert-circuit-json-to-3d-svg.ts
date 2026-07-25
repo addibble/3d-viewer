@@ -7,6 +7,7 @@ import { createSimplifiedBoardGeom } from "./soup-to-3d"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
+import { renderFdmEnclosure } from "./utils/render-fdm-enclosure"
 import { colors } from "./geoms/constants"
 
 interface CircuitToSvgOptions {
@@ -91,6 +92,13 @@ export async function convertCircuitJsonTo3dSvg(
   const components = su(circuitJson).cad_component.list()
   for (const component of components) {
     await renderComponent(component, scene)
+  }
+
+  // Add generated enclosure parts (typed CAD, no PCB owner)
+  for (const element of circuitJson) {
+    if (element.type === "cad_fdm_enclosure") {
+      renderFdmEnclosure(element, scene)
+    }
   }
 
   const boardData = su(circuitJson).pcb_board.list()[0]

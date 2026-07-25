@@ -1,10 +1,15 @@
 import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  CadComponent,
+  CadFdmEnclosure,
+} from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
+import { CadFdmEnclosureModel } from "./three-components/CadFdmEnclosureModel"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import type { CameraController } from "./hooks/cameraAnimation"
@@ -259,6 +264,15 @@ try {
     [circuitJson],
   )
 
+  const cadFdmEnclosures = useMemo(
+    () =>
+      (circuitJson as Array<{ type: string }>).filter(
+        (element): element is CadFdmEnclosure =>
+          element.type === "cad_fdm_enclosure",
+      ),
+    [circuitJson],
+  )
+
   const boardDimensions = useMemo(() => {
     if (!boardData) return undefined
     const bounds = calculateOutlineBounds(boardData)
@@ -346,6 +360,14 @@ try {
             circuitJson={circuitJson}
             resolveStaticAsset={resolveStaticAsset}
           />
+        </ThreeErrorBoundary>
+      ))}
+      {cadFdmEnclosures.map((cad_fdm_enclosure) => (
+        <ThreeErrorBoundary
+          key={cad_fdm_enclosure.cad_fdm_enclosure_id}
+          fallback={() => null}
+        >
+          <CadFdmEnclosureModel cad_fdm_enclosure={cad_fdm_enclosure} />
         </ThreeErrorBoundary>
       ))}
     </CadViewerContainer>

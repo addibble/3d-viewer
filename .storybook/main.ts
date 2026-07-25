@@ -25,6 +25,23 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     const { mergeConfig } = await import("vite")
     const customViteConfig = {
+      plugins: [
+        {
+          // Story data assets are plain JSON imports, which have no HMR handler
+          // of their own: Vite invalidates the importing story and React Fast
+          // Refresh accepts the update without re-running the story's module
+          // body, so the viewer keeps rendering the previous data. Regenerating
+          // one (see core's `watch:prefab-board`) should reload the page.
+          name: "reload-on-story-asset-change",
+          handleHotUpdate({ file, server }: { file: string; server: any }) {
+            if (!file.includes("/stories/assets/") || !file.endsWith(".json")) {
+              return
+            }
+            server.ws.send({ type: "full-reload", path: "*" })
+            return []
+          },
+        },
+      ],
       resolve: {
         alias: {
           src: path.resolve(__dirname, "../src"),
