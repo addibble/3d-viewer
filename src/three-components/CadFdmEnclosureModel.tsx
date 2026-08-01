@@ -1,5 +1,6 @@
 import type { CadFdmEnclosure } from "circuit-json"
 import { useState } from "react"
+import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { JscadModel } from "./JscadModel"
 
 /**
@@ -19,8 +20,20 @@ export const CadFdmEnclosureModel = ({
   cad_fdm_enclosure: CadFdmEnclosure
 }) => {
   const [isHovered, setIsHovered] = useState(false)
+  const { visibility } = useLayerVisibility()
 
   if (!cad_fdm_enclosure.model_jscad) return null
+
+  // A translucent lid is the one model most likely to be in the way, so it must
+  // answer to the same toggle as a translucent `cad_component`. Skipping the
+  // check left "hide translucent models" hiding everything except the enclosure
+  // the user was trying to see past.
+  if (
+    cad_fdm_enclosure.show_as_translucent_model &&
+    !visibility.translucentModels
+  ) {
+    return null
+  }
 
   const { position, rotation } = cad_fdm_enclosure
 
