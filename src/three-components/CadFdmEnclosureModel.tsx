@@ -24,16 +24,15 @@ export const CadFdmEnclosureModel = ({
 
   if (!cad_fdm_enclosure.model_jscad) return null
 
-  // A translucent lid is the one model most likely to be in the way, so it must
-  // answer to the same toggle as a translucent `cad_component`. Skipping the
-  // check left "hide translucent models" hiding everything except the enclosure
-  // the user was trying to see past.
-  if (
-    cad_fdm_enclosure.show_as_translucent_model &&
-    !visibility.translucentModels
-  ) {
-    return null
-  }
+  // How the part is shown is the viewer's to decide, per part. The record says
+  // which piece of the enclosure this is; the Appearance menu says whether that
+  // piece is hidden, see-through or solid, and defaults to see-through so the
+  // board inside stays visible.
+  const partVisibility =
+    cad_fdm_enclosure.enclosure_part === "lid"
+      ? visibility.enclosureLid
+      : visibility.enclosureBase
+  if (partVisibility === "hidden") return null
 
   const { position, rotation } = cad_fdm_enclosure
 
@@ -52,7 +51,7 @@ export const CadFdmEnclosureModel = ({
           : [0, 0, 0]
       }
       scale={cad_fdm_enclosure.model_unit_to_mm_scale_factor ?? 1}
-      isTranslucent={cad_fdm_enclosure.show_as_translucent_model}
+      isTranslucent={partVisibility === "translucent"}
       onHover={() => setIsHovered(true)}
       onUnhover={() => setIsHovered(false)}
       isHovered={isHovered}

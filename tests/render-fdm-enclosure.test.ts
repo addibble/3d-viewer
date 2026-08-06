@@ -24,6 +24,7 @@ const enclosure = (overrides: Record<string, unknown> = {}) =>
     cad_fdm_enclosure_id: "cad_enclosure_1",
     source_fdm_enclosure_id: "enclosure_1",
     name: "EN1.base",
+    enclosure_part: "base",
     position: { x: 1, y: 2, z: -3 },
     size: { x: 20, y: 12, z: 10 },
     model_jscad: boxPlan,
@@ -51,23 +52,21 @@ test("an enclosure part is placed by position alone, with no asset normalization
   expect(bounds.max.z - bounds.min.z).toBeCloseTo(10)
 })
 
-test("show_as_translucent_model makes a single part see-through", () => {
-  const opaqueScene = new THREE.Scene()
-  renderFdmEnclosure(enclosure(), opaqueScene)
-  const opaque = (opaqueScene.children[0] as THREE.Mesh)
-    .material as THREE.MeshStandardMaterial
-  expect(opaque.transparent).toBe(false)
-  expect(opaque.opacity).toBe(1)
+/**
+ * This path renders straight to a scene with no Appearance menu to consult, so
+ * it takes the same default the menu starts on: see-through, because an opaque
+ * shell hides the board it was generated from.
+ */
+test("enclosure parts render see-through by default", () => {
+  for (const part of ["base", "lid"] as const) {
+    const scene = new THREE.Scene()
+    renderFdmEnclosure(enclosure({ enclosure_part: part }), scene)
 
-  const lidScene = new THREE.Scene()
-  renderFdmEnclosure(
-    enclosure({ show_as_translucent_model: true, name: "EN1.lid" }),
-    lidScene,
-  )
-  const lid = (lidScene.children[0] as THREE.Mesh)
-    .material as THREE.MeshStandardMaterial
-  expect(lid.transparent).toBe(true)
-  expect(lid.opacity).toBeLessThan(1)
+    const material = (scene.children[0] as THREE.Mesh)
+      .material as THREE.MeshStandardMaterial
+    expect(material.transparent).toBe(true)
+    expect(material.opacity).toBeLessThan(1)
+  }
 })
 
 test("rotation is interpreted in degrees, matching cad_component", () => {

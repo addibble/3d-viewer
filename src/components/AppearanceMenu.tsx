@@ -3,8 +3,13 @@ import type React from "react"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import { useAppearance } from "../contexts/appearance-context"
-import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { CheckIcon, ChevronRightIcon } from "./Icons"
+import {
+  type LayerVisibilityState,
+  type PartVisibility,
+  nextPartVisibility,
+  useLayerVisibility,
+} from "../contexts/LayerVisibilityContext"
+import { CheckIcon, CheckMinusIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",
@@ -59,6 +64,56 @@ const iconContainerStyles: React.CSSProperties = {
   justifyContent: "center",
   flexShrink: 0,
 }
+
+/**
+ * A menu item with three states rather than two.
+ *
+ * An enclosure part is not usefully on-or-off: solid is what you want to judge
+ * the print, see-through is what you want to check openings against the parts
+ * behind them, and hidden is what you want when it is simply in the way. The
+ * tick follows the same reading as a partially-selected checkbox -- empty,
+ * minus, tick -- and clicking cycles.
+ */
+const TriStateItem = ({
+  layer,
+  label,
+  value,
+  setLayerVisibility,
+  hoveredItem,
+  setHoveredItem,
+}: {
+  layer: "enclosureBase" | "enclosureLid"
+  label: string
+  value: PartVisibility
+  setLayerVisibility: <K extends keyof LayerVisibilityState>(
+    layer: K,
+    visible: LayerVisibilityState[K],
+  ) => void
+  hoveredItem: string | null
+  setHoveredItem: (item: string | null) => void
+}) => (
+  <DropdownMenu.Item
+    style={{
+      ...itemStyles,
+      backgroundColor: hoveredItem === layer ? "#404040" : "transparent",
+    }}
+    onSelect={(e) => e.preventDefault()}
+    onPointerDown={(e) => {
+      e.preventDefault()
+      setLayerVisibility(layer, nextPartVisibility(value))
+    }}
+    onMouseEnter={() => setHoveredItem(layer)}
+    onMouseLeave={() => setHoveredItem(null)}
+    onTouchStart={() => setHoveredItem(layer)}
+    title={`${label}: ${value}`}
+  >
+    <span style={iconContainerStyles}>
+      {value === "opaque" && <CheckIcon />}
+      {value === "translucent" && <CheckMinusIcon />}
+    </span>
+    <span style={{ display: "flex", alignItems: "center" }}>{label}</span>
+  </DropdownMenu.Item>
+)
 
 export const AppearanceMenu = () => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
@@ -420,6 +475,25 @@ export const AppearanceMenu = () => {
                 Through-Hole Components
               </span>
             </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
+            <TriStateItem
+              layer="enclosureBase"
+              label="Enclosure Base"
+              value={visibility.enclosureBase}
+              setLayerVisibility={setLayerVisibility}
+              hoveredItem={hoveredItem}
+              setHoveredItem={setHoveredItem}
+            />
+            <TriStateItem
+              layer="enclosureLid"
+              label="Enclosure Lid"
+              value={visibility.enclosureLid}
+              setLayerVisibility={setLayerVisibility}
+              hoveredItem={hoveredItem}
+              setHoveredItem={setHoveredItem}
+            />
           </DropdownMenu.SubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>

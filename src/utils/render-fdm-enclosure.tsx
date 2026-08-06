@@ -25,7 +25,9 @@ export function renderFdmEnclosure(
   if (!jscadObject || (!jscadObject.polygons && !jscadObject.sides)) return
 
   const threeGeom = convertCSGToThreeGeom(jscadObject)
-  const isTranslucent = enclosure.show_as_translucent_model ?? false
+  // See-through by default: this path has no menu to consult, and an opaque
+  // shell hides the board it was generated from.
+  const isTranslucent = true
   const material = new THREE.MeshStandardMaterial({
     color: 0x888888,
     metalness: 0.5,

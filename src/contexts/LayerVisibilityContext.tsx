@@ -28,13 +28,40 @@ export interface LayerVisibilityState {
   pcbNotes: boolean
   backgroundStart: boolean
   backgroundEnd: boolean
+  /**
+   * Enclosure parts get three states rather than two, because two is not
+   * enough for something whose job is to surround everything else: hidden to
+   * get it out of the way, see-through to check openings against the parts
+   * behind them, solid to look at the print itself.
+   *
+   * One entry per printed part, matching `cad_fdm_enclosure.enclosure_part`,
+   * so a lid can be taken off without losing the base. The set grows with the
+   * process -- fasteners and inserts are parts too.
+   */
+  enclosureBase: PartVisibility
+  enclosureLid: PartVisibility
 }
+
+/** Hidden, see-through, or solid. */
+export type PartVisibility = "hidden" | "translucent" | "opaque"
+
+/** The order the menu cycles through on each click. */
+export const PART_VISIBILITY_CYCLE: PartVisibility[] = [
+  "translucent",
+  "opaque",
+  "hidden",
+]
+
+export const nextPartVisibility = (current: PartVisibility): PartVisibility =>
+  PART_VISIBILITY_CYCLE[
+    (PART_VISIBILITY_CYCLE.indexOf(current) + 1) % PART_VISIBILITY_CYCLE.length
+  ]!
 
 interface LayerVisibilityContextType {
   visibility: LayerVisibilityState
-  setLayerVisibility: (
-    layer: keyof LayerVisibilityState,
-    visible: boolean,
+  setLayerVisibility: <K extends keyof LayerVisibilityState>(
+    layer: K,
+    visible: LayerVisibilityState[K],
   ) => void
   resetToDefaults: () => void
 }
@@ -60,6 +87,11 @@ const defaultVisibility: LayerVisibilityState = {
   pcbNotes: false,
   backgroundStart: true,
   backgroundEnd: true,
+  // See-through by default: an opaque enclosure hides the board it was
+  // generated from, and checking the openings against the parts behind them is
+  // the reason to render it at all.
+  enclosureBase: "translucent",
+  enclosureLid: "translucent",
 }
 
 const LayerVisibilityContext = createContext<
@@ -73,7 +105,10 @@ export const LayerVisibilityProvider: React.FC<{
     useState<LayerVisibilityState>(defaultVisibility)
 
   const setLayerVisibility = useCallback(
-    (layer: keyof LayerVisibilityState, visible: boolean) => {
+    <K extends keyof LayerVisibilityState>(
+      layer: K,
+      visible: LayerVisibilityState[K],
+    ) => {
       setVisibility((prev) => ({
         ...prev,
         [layer]: visible,
