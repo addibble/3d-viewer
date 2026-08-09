@@ -61,10 +61,10 @@ docstring which of the two it is.
    turned out to be compensations for bugs elsewhere. Find the origin commit or
    the pinning test first, and prefer removing the compensation at its source.
 
-There is a standing proposal to consolidate the transform tables duplicated
-between this package and `circuit-json-to-gltf`: `tscircuit/rfc`,
-`rfcs/2026-07-22-coordinate-frame-consolidation.md`. Read it before adding
-another hardcoded rotation.
+The current enclosure/frame contract is documented in the parametric-enclosures
+RFC's **Faces** and **Aperture projection** sections. Read those together with
+this file before adding another hardcoded rotation; the older standalone
+coordinate-frame RFC was retired.
 
 ## Testing geometry
 
