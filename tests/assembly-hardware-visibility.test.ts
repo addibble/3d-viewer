@@ -20,28 +20,26 @@ const cad = (extra: Partial<CadComponent>): CadComponent =>
 test("recognizes each assembly hardware family from its model string", () => {
   expect(
     getAssemblyHardwareFamily(
-      cad({ modelprinter_string: "screw_m3_l6_socketcap" }),
+      cad({ footprinter_string: "screw_m3_l6_socketcap" }),
     ),
   ).toBe("screw")
   expect(
     getAssemblyHardwareFamily(
-      cad({ modelprinter_string: "bolt_m3_l12_socketcap" }),
+      cad({ footprinter_string: "bolt_m3_l12_socketcap" }),
     ),
   ).toBe("bolt")
   expect(
     getAssemblyHardwareFamily(
-      cad({ modelprinter_string: "heatsetinsert_m3_l5.7" }),
+      cad({ footprinter_string: "heatsetinsert_m3_l5.7" }),
     ),
   ).toBe("heatsetinsert")
   expect(
-    getAssemblyHardwareFamily(
-      cad({ modelprinter_string: "spacer_od5_id3_l6" }),
-    ),
+    getAssemblyHardwareFamily(cad({ footprinter_string: "spacer_od5_id3_l6" })),
   ).toBe("spacer")
 })
 
 test("does not claim a model string that is not hardware", () => {
-  expect(isAssemblyHardware(cad({ modelprinter_string: "flexscreen" }))).toBe(
+  expect(isAssemblyHardware(cad({ footprinter_string: "flexscreen" }))).toBe(
     false,
   )
   expect(isAssemblyHardware(cad({ footprinter_string: "0402" }))).toBe(false)
@@ -60,7 +58,7 @@ test("does not claim a model string that is not hardware", () => {
  */
 test("is not confused by the enclosure's placeholder-owner shape", () => {
   const hardwareWithEnclosureLikeOwner = cad({
-    modelprinter_string: "bolt_m3_l12_socketcap",
+    footprinter_string: "bolt_m3_l12_socketcap",
     model_origin_alignment: "bottom_center_of_component",
   })
   expect(isAssemblyHardware(hardwareWithEnclosureLikeOwner)).toBe(true)
@@ -74,27 +72,33 @@ test("is not confused by the enclosure's placeholder-owner shape", () => {
  * fastener disappear from the hardware control because of a spec typo.
  */
 test("classifies by family, not by whether the part can be built", () => {
-  expect(isAssemblyHardware(cad({ modelprinter_string: "screw_m9_l8" }))).toBe(
+  expect(isAssemblyHardware(cad({ footprinter_string: "screw_m9_l8" }))).toBe(
     true,
   )
   expect(() => getAssemblyHardwareModel("screw_m9_l8")).toThrow()
 })
 
 test("survives a malformed model string rather than throwing", () => {
-  expect(isAssemblyHardware(cad({ modelprinter_string: "" }))).toBe(false)
-  expect(isAssemblyHardware(cad({ modelprinter_string: "_" }))).toBe(false)
+  expect(isAssemblyHardware(cad({ footprinter_string: "" }))).toBe(false)
+  expect(isAssemblyHardware(cad({ footprinter_string: "_" }))).toBe(false)
 })
 
-test("dispatches modelprinter strings, without displacing a baked plan", () => {
-  expect(getCadModelType(cad({ modelprinter_string: "screw_m3_l6" }))).toBe(
-    "modelprinter",
+/**
+ * Hardware travels in `footprinter_string`, the one field Circuit JSON has for
+ * a model named by a string, so it dispatches down the footprinter path -- where
+ * `getJscadModelForFootprint` tries the modelprinter vocabulary before falling
+ * through. That is what lets one dispatch serve both renderers.
+ */
+test("hardware dispatches as a footprinter string, and a baked plan still wins", () => {
+  expect(getCadModelType(cad({ footprinter_string: "screw_m3_l6" }))).toBe(
+    "footprinter",
   )
   // A plan already built for this component is a decision that has been made;
   // the string is only the specification it was made from.
   expect(
     getCadModelType(
       cad({
-        modelprinter_string: "screw_m3_l6",
+        footprinter_string: "screw_m3_l6",
         model_jscad: { type: "cuboid" },
       }),
     ),

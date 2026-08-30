@@ -25,7 +25,6 @@ import {
 } from "./utils/get-cad-model-type"
 import { isLegacyFdmEnclosure } from "./utils/is-legacy-fdm-enclosure"
 import { isAssemblyHardware } from "./utils/is-assembly-hardware"
-import { getAssemblyHardwareModel } from "@tscircuit/jscad-assembly-hardware"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -134,23 +133,10 @@ export const AnyCadComponent = ({
       ? visibility.assemblyHardware === "translucent"
       : Boolean(cad_component.show_as_translucent_model)
 
-  /**
-   * A modelprinter string is expanded to a JSCAD plan here rather than upstream,
-   * so the part travels as its specification and only becomes geometry at the
-   * point of drawing -- the same trade footprinter_string already makes.
-   */
-  const modelprinterPlan = useMemo(() => {
-    if (!cad_component.modelprinter_string || cad_component.model_jscad) {
-      return null
-    }
-    try {
-      return getAssemblyHardwareModel(cad_component.modelprinter_string)
-    } catch {
-      // An unknown family is not an error worth blanking the scene for; the
-      // component simply renders via whatever model_* field it also carries.
-      return null
-    }
-  }, [cad_component.modelprinter_string, cad_component.model_jscad])
+  // Assembly hardware needs no branch of its own: it travels as a
+  // footprinter_string, and the footprinter path already dispatches the
+  // modelprinter vocabulary before falling through -- so both renderers get it
+  // from one place.
   const sourceModelType = getCadModelType(cad_component)
   const renderedModelType = getRenderedCadModelType(sourceModelType)
   const gltfModelType: CadModelType = cad_component.model_glb_url
@@ -303,11 +289,11 @@ export const AnyCadComponent = ({
         {fallbackModelComponents[fallbackModelIndex]}
       </ThreeErrorBoundary>
     )
-  } else if (cad_component.model_jscad || modelprinterPlan) {
+  } else if (cad_component.model_jscad) {
     modelComponent = (
       <JscadModel
         key={cad_component.cad_component_id}
-        jscadPlan={cad_component.model_jscad ?? modelprinterPlan}
+        jscadPlan={cad_component.model_jscad}
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         modelOffset={modelTransform.modelPosition}
