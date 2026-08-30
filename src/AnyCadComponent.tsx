@@ -24,6 +24,8 @@ import {
   getRenderedCadModelType,
 } from "./utils/get-cad-model-type"
 import { isLegacyFdmEnclosure } from "./utils/is-legacy-fdm-enclosure"
+import { isAssemblyHardware } from "./utils/is-assembly-hardware"
+import { getAssemblyHardwareModel } from "@tscircuit/jscad-assembly-hardware"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -122,9 +124,33 @@ export const AnyCadComponent = ({
     () => isLegacyFdmEnclosure(cad_component, circuitJson),
     [cad_component, circuitJson],
   )
+  const isHardware = useMemo(
+    () => isAssemblyHardware(cad_component),
+    [cad_component],
+  )
   const isTranslucent = isEnclosure
     ? visibility.enclosure === "translucent"
-    : Boolean(cad_component.show_as_translucent_model)
+    : isHardware
+      ? visibility.assemblyHardware === "translucent"
+      : Boolean(cad_component.show_as_translucent_model)
+
+  /**
+   * A modelprinter string is expanded to a JSCAD plan here rather than upstream,
+   * so the part travels as its specification and only becomes geometry at the
+   * point of drawing -- the same trade footprinter_string already makes.
+   */
+  const modelprinterPlan = useMemo(() => {
+    if (!cad_component.modelprinter_string || cad_component.model_jscad) {
+      return null
+    }
+    try {
+      return getAssemblyHardwareModel(cad_component.modelprinter_string)
+    } catch {
+      // An unknown family is not an error worth blanking the scene for; the
+      // component simply renders via whatever model_* field it also carries.
+      return null
+    }
+  }, [cad_component.modelprinter_string, cad_component.model_jscad])
   const sourceModelType = getCadModelType(cad_component)
   const renderedModelType = getRenderedCadModelType(sourceModelType)
   const gltfModelType: CadModelType = cad_component.model_glb_url
@@ -277,11 +303,11 @@ export const AnyCadComponent = ({
         {fallbackModelComponents[fallbackModelIndex]}
       </ThreeErrorBoundary>
     )
-  } else if (cad_component.model_jscad) {
+  } else if (cad_component.model_jscad || modelprinterPlan) {
     modelComponent = (
       <JscadModel
         key={cad_component.cad_component_id}
-        jscadPlan={cad_component.model_jscad}
+        jscadPlan={cad_component.model_jscad ?? modelprinterPlan}
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         modelOffset={modelTransform.modelPosition}
@@ -317,6 +343,11 @@ export const AnyCadComponent = ({
   // models retain the existing translucent/SMT/through-hole category toggles.
   if (isEnclosure) {
     if (visibility.enclosure === "hidden") return null
+  } else if (isHardware) {
+    // Assembly hardware gets its own three-state control, for the same reason
+    // the enclosure does: it is inspected against the parts around it, so it
+    // has to be hideable without hiding them.
+    if (visibility.assemblyHardware === "hidden") return null
   } else if (cad_component.show_as_translucent_model) {
     if (!visibility.translucentModels) return null
   } else {

@@ -34,6 +34,17 @@ export interface LayerVisibilityState {
    * check openings against the board, opaque to inspect the print itself.
    */
   enclosure: EnclosureVisibility
+  /**
+   * Three-state display for assembly hardware -- screws, bolts, heat-set
+   * inserts, spacers. Same three states and the same reasons as the enclosure:
+   * hidden to work unobstructed, translucent to see a fastener through the boss
+   * it sits in, opaque to inspect the part itself.
+   *
+   * Separate from `enclosure` because the two are inspected against each other:
+   * checking that a bolt reaches its insert means hiding the shell while
+   * keeping the hardware.
+   */
+  assemblyHardware: EnclosureVisibility
 }
 
 export type EnclosureVisibility = "hidden" | "translucent" | "opaque"
@@ -83,6 +94,10 @@ const defaultVisibility: LayerVisibilityState = {
   backgroundStart: true,
   backgroundEnd: true,
   enclosure: "translucent",
+  // Opaque by default: hardware is small, and the reason to draw it at all is
+  // to see the part. The enclosure defaults translucent because it is the thing
+  // in the way.
+  assemblyHardware: "opaque",
 }
 
 const LayerVisibilityContext = createContext<
