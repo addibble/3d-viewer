@@ -21,7 +21,11 @@ import type { CadComponent } from "circuit-json"
 export const getAssemblyHardwareFamily = (
   cadComponent: CadComponent,
 ): string | null => {
-  const modelString = cadComponent.modelprinter_string
+  // `footprinter_string` is Circuit JSON's one field for "a model named by a
+  // string". The name is historical -- the renderers' shared entry point tries
+  // the modelprinter vocabulary first and falls through to footprinter, which
+  // is how `flexscreen` already travels.
+  const modelString = cadComponent.footprinter_string
   if (!modelString) return null
 
   let family: string
