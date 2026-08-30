@@ -1,6 +1,11 @@
 import type { CadComponent, CadModelFormat } from "circuit-json"
 
-export type CadModelType = CadModelFormat | "footprinter" | "jscad" | "unknown"
+export type CadModelType =
+  | CadModelFormat
+  | "footprinter"
+  | "modelprinter"
+  | "jscad"
+  | "unknown"
 
 export type RenderedCadModelType = Exclude<CadModelType, "step"> | "glb"
 
@@ -20,6 +25,9 @@ export const getCadModelType = (cadComponent: CadComponent): CadModelType => {
   }
 
   if (cadComponent.model_jscad) return "jscad"
+  // Checked after model_jscad so a baked plan still wins: the string is the
+  // specification, the plan is a decision already made about it.
+  if (cadComponent.modelprinter_string) return "modelprinter"
   if (cadComponent.footprinter_string) return "footprinter"
   if (cadComponent.model_step_url) return "step"
   return "unknown"
