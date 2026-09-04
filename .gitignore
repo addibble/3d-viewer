@@ -41,3 +41,4 @@ stories/renderer-comparison/public/generated/
 playwright-report/
 test-results/
 .renderer-comparison-cache/
+*.diff.png
