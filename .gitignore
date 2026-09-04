@@ -34,3 +34,4 @@ package-lock.json
 storybook-static
 repomix-output.txt
 .codex
+*.diff.png
