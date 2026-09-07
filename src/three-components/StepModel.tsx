@@ -3,6 +3,7 @@ import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { occtMeshesToGroup, type OcctMesh } from "./step-mesh-to-group"
+import type { CadModelPlacementInput } from "src/utils/cad-model-transform"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
@@ -172,6 +173,7 @@ type StepModelProps = {
   modelSize?: CadModelSize
   modelFitMode?: CadModelFitMode
   scale?: number
+  cadPlacement?: CadModelPlacementInput
   onHover: (event: unknown) => void
   onUnhover: () => void
   isHovered: boolean
@@ -188,6 +190,7 @@ export const StepModel = ({
   modelSize,
   modelFitMode,
   scale,
+  cadPlacement,
   onHover,
   onUnhover,
   isHovered,
@@ -291,6 +294,7 @@ export const StepModel = ({
       modelSize={modelSize}
       modelFitMode={modelFitMode}
       scale={scale}
+      cadPlacement={cadPlacement}
       onHover={onHover}
       onUnhover={onUnhover}
       isHovered={isHovered}

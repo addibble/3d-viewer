@@ -5,6 +5,12 @@ import type {
 } from "circuit-json"
 import type { CadModelType, RenderedCadModelType } from "./get-cad-model-type"
 import * as THREE from "three"
+import {
+  applyMat4ToPoint3,
+  composeMat4,
+  mat4,
+  quaternionFromEulerDegrees,
+} from "@tscircuit/circuit-json-util"
 
 export interface CoordinateTransformConfig {
   axisMapping?: { x?: string; y?: string; z?: string }
@@ -26,59 +32,7 @@ export function applyCoordinateTransform(
   point: { x: number; y: number; z: number },
   config: CoordinateTransformConfig,
 ): { x: number; y: number; z: number } {
-  let { x, y, z } = point
-
-  if (config.axisMapping) {
-    const original = { x, y, z }
-
-    if (config.axisMapping.x) {
-      x = getAxisValue(original, config.axisMapping.x)
-    }
-    if (config.axisMapping.y) {
-      y = getAxisValue(original, config.axisMapping.y)
-    }
-    if (config.axisMapping.z) {
-      z = getAxisValue(original, config.axisMapping.z)
-    }
-  }
-
-  x *= config.flipX ?? 1
-  y *= config.flipY ?? 1
-  z *= config.flipZ ?? 1
-
-  if (config.rotation) {
-    if (config.rotation.x) {
-      const rad = (config.rotation.x * Math.PI) / 180
-      const cos = Math.cos(rad)
-      const sin = Math.sin(rad)
-      const newY = y * cos - z * sin
-      const newZ = y * sin + z * cos
-      y = newY
-      z = newZ
-    }
-
-    if (config.rotation.y) {
-      const rad = (config.rotation.y * Math.PI) / 180
-      const cos = Math.cos(rad)
-      const sin = Math.sin(rad)
-      const newX = x * cos + z * sin
-      const newZ = -x * sin + z * cos
-      x = newX
-      z = newZ
-    }
-
-    if (config.rotation.z) {
-      const rad = (config.rotation.z * Math.PI) / 180
-      const cos = Math.cos(rad)
-      const sin = Math.sin(rad)
-      const newX = x * cos - y * sin
-      const newY = x * sin + y * cos
-      x = newX
-      y = newY
-    }
-  }
-
-  return { x, y, z }
+  return applyMat4ToPoint3(getCadLoaderTransformMatrix(config)!.elements, point)
 }
 
 function getAxisValue(
@@ -99,7 +53,7 @@ function getAxisValue(
     case "-z":
       return -original.z
     default:
-      return 0
+      throw new Error(`Invalid coordinate axis mapping: ${mapping}`)
   }
 }
 
@@ -225,13 +179,37 @@ export function getCadLoaderTransformMatrix(
     return undefined
   }
 
-  const basisX = applyCoordinateTransform({ x: 1, y: 0, z: 0 }, config)
-  const basisY = applyCoordinateTransform({ x: 0, y: 1, z: 0 }, config)
-  const basisZ = applyCoordinateTransform({ x: 0, y: 0, z: 1 }, config)
-
-  return new THREE.Matrix4().makeBasis(
-    new THREE.Vector3(basisX.x, basisX.y, basisX.z),
-    new THREE.Vector3(basisY.x, basisY.y, basisY.z),
-    new THREE.Vector3(basisZ.x, basisZ.y, basisZ.z),
+  const basis = [
+    { x: 1, y: 0, z: 0 },
+    { x: 0, y: 1, z: 0 },
+    { x: 0, y: 0, z: 1 },
+  ].map(
+    (point) =>
+      new THREE.Vector3(
+        getAxisValue(point, config.axisMapping?.x ?? "x"),
+        getAxisValue(point, config.axisMapping?.y ?? "y"),
+        getAxisValue(point, config.axisMapping?.z ?? "z"),
+      ),
+  )
+  const mapping = new THREE.Matrix4().makeBasis(basis[0]!, basis[1]!, basis[2]!)
+  // Intrinsic ZYX is the old extrinsic X -> Y -> Z order, after map/flips.
+  const rotation = quaternionFromEulerDegrees(
+    {
+      x: config.rotation?.x ?? 0,
+      y: config.rotation?.y ?? 0,
+      z: config.rotation?.z ?? 0,
+    },
+    "zyx",
+  )
+  return new THREE.Matrix4().fromArray(
+    composeMat4(
+      mat4.fromQuat(new Float64Array(16), rotation),
+      mat4.fromScaling(new Float64Array(16), [
+        config.flipX ?? 1,
+        config.flipY ?? 1,
+        config.flipZ ?? 1,
+      ]),
+      mapping.elements,
+    ),
   )
 }

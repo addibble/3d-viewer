@@ -53,7 +53,7 @@ test("uses model_origin_position like circuit-json-to-gltf for top-layer CAD pla
 
   expect(transform.position).toEqual([0, 1.0658141036401503e-14, 0.7])
   expect(transform.rotation).toEqual([0, 0, (270 * Math.PI) / 180])
-  expect(transform.modelRotation).toEqual([0, 0, 0])
+  for (const angle of transform.modelRotation) expect(angle).toBeCloseTo(0)
   expect(transform.modelPosition[0]).toBeCloseTo(0)
   expect(transform.modelPosition[1]).toBeCloseTo(0)
   expect(transform.modelPosition[2]).toBeCloseTo(2.5)
@@ -75,7 +75,9 @@ test("rotates model origin with viewer z+ as the board-up baseline", () => {
     modelType: "gltf",
   })
 
-  expect(transform.modelRotation).toEqual([Math.PI / 2, 0, 0])
+  expect(transform.modelRotation[0]).toBeCloseTo(Math.PI / 2)
+  expect(transform.modelRotation[1]).toBeCloseTo(0)
+  expect(transform.modelRotation[2]).toBeCloseTo(0)
   expect(transform.modelPosition[0]).toBeCloseTo(0)
   expect(transform.modelPosition[1]).toBeCloseTo(0)
   expect(transform.modelPosition[2]).toBeCloseTo(-1)
@@ -97,7 +99,9 @@ test("does not shift model origin when model_origin_position is missing", () => 
     modelType: "obj",
   })
 
-  expect(transform.modelRotation).toEqual([Math.PI / 2, 0, 0])
+  expect(transform.modelRotation[0]).toBeCloseTo(Math.PI / 2)
+  expect(transform.modelRotation[1]).toBeCloseTo(0)
+  expect(transform.modelRotation[2]).toBeCloseTo(0)
   expect(transform.modelPosition[0]).toBeCloseTo(0)
   expect(transform.modelPosition[1]).toBeCloseTo(0)
   expect(transform.modelPosition[2]).toBeCloseTo(0)

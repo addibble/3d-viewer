@@ -8,6 +8,7 @@ import ContainerWithTooltip from "src/ContainerWithTooltip"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
+import type { CadModelPlacementInput } from "src/utils/cad-model-transform"
 
 export const JscadModel = ({
   jscadPlan,
@@ -22,6 +23,7 @@ export const JscadModel = ({
   onUnhover,
   isHovered,
   scale,
+  cadPlacement,
   isTranslucent = false,
 }: {
   jscadPlan: JscadOperation
@@ -36,6 +38,7 @@ export const JscadModel = ({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  cadPlacement?: CadModelPlacementInput
   isTranslucent?: boolean
 }) => {
   const [mesh, setMesh] = useState<THREE.Mesh<
@@ -91,6 +94,7 @@ export const JscadModel = ({
     modelSize,
     modelFitMode,
     scale,
+    cadPlacement,
   })
 
   useEffect(() => {

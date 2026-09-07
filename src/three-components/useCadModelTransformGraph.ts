@@ -1,6 +1,11 @@
 import { useEffect, useMemo } from "react"
 import * as THREE from "three"
+import { mat4, quaternionFromEulerDegrees } from "@tscircuit/circuit-json-util"
 import { useThree } from "src/react-three/ThreeContext"
+import {
+  getCadModelObjectMatrix,
+  type CadModelPlacementInput,
+} from "src/utils/cad-model-transform"
 import {
   getCadModelFitScale,
   type CadModelFitMode,
@@ -17,6 +22,7 @@ interface UseCadModelTransformGraphOptions {
   modelSize?: CadModelSize
   modelFitMode?: CadModelFitMode
   scale?: number
+  cadPlacement?: CadModelPlacementInput
 }
 
 export const useCadModelTransformGraph = ({
@@ -29,6 +35,7 @@ export const useCadModelTransformGraph = ({
   modelSize,
   modelFitMode = "contain_within_bounds",
   scale,
+  cadPlacement,
 }: UseCadModelTransformGraphOptions) => {
   const { rootObject } = useThree()
   const boardTransformGroup = useMemo(() => new THREE.Group(), [])
@@ -69,19 +76,14 @@ export const useCadModelTransformGraph = ({
   }, [loaderTransformGroup, model])
 
   useEffect(() => {
-    if (!sourceCoordinateTransform) {
-      loaderTransformGroup.matrixAutoUpdate = true
-      loaderTransformGroup.position.set(0, 0, 0)
-      loaderTransformGroup.rotation.set(0, 0, 0)
-      loaderTransformGroup.scale.set(1, 1, 1)
-      loaderTransformGroup.updateMatrix()
-      return
-    }
-
     loaderTransformGroup.matrixAutoUpdate = false
-    loaderTransformGroup.matrix.copy(sourceCoordinateTransform)
+    if (sourceCoordinateTransform && !cadPlacement) {
+      loaderTransformGroup.matrix.copy(sourceCoordinateTransform)
+    } else {
+      loaderTransformGroup.matrix.identity()
+    }
     loaderTransformGroup.matrixWorldNeedsUpdate = true
-  }, [loaderTransformGroup, sourceCoordinateTransform])
+  }, [loaderTransformGroup, sourceCoordinateTransform, cadPlacement])
 
   useEffect(() => {
     if (!rootObject) return
@@ -93,21 +95,53 @@ export const useCadModelTransformGraph = ({
   }, [rootObject, boardTransformGroup])
 
   useEffect(() => {
-    if (position) {
-      boardTransformGroup.position.fromArray(position)
-    } else {
-      boardTransformGroup.position.set(0, 0, 0)
+    if (cadPlacement && model) {
+      const matrix = getCadModelObjectMatrix(model, cadPlacement)
+      boardTransformGroup.matrixAutoUpdate = false
+      boardTransformGroup.matrix.copy(matrix)
+      boardTransformGroup.matrixWorldNeedsUpdate = true
+      fitTransformGroup.scale.set(1, 1, 1)
+      modelTransformGroup.matrixAutoUpdate = false
+      modelTransformGroup.matrix.identity()
+      modelTransformGroup.matrixWorldNeedsUpdate = true
+      return
     }
-
-    if (rotation) {
-      boardTransformGroup.rotation.fromArray(rotation)
-    } else {
-      boardTransformGroup.rotation.set(0, 0, 0)
-    }
-
-    modelTransformGroup.position.fromArray(modelOffset)
-    modelTransformGroup.rotation.fromArray(modelRotation)
-    modelTransformGroup.scale.setScalar(scale ?? 1)
+    const degrees = 180 / Math.PI
+    const boardQuaternion = quaternionFromEulerDegrees(
+      {
+        x: (rotation?.[0] ?? 0) * degrees,
+        y: (rotation?.[1] ?? 0) * degrees,
+        z: (rotation?.[2] ?? 0) * degrees,
+      },
+      "xyz",
+    )
+    const modelQuaternion = quaternionFromEulerDegrees(
+      {
+        x: modelRotation[0] * degrees,
+        y: modelRotation[1] * degrees,
+        z: modelRotation[2] * degrees,
+      },
+      "xyz",
+    )
+    boardTransformGroup.matrixAutoUpdate = false
+    boardTransformGroup.matrix.fromArray(
+      mat4.fromRotationTranslation(
+        new Float64Array(16),
+        boardQuaternion,
+        position ?? [0, 0, 0],
+      ),
+    )
+    boardTransformGroup.matrixWorldNeedsUpdate = true
+    modelTransformGroup.matrixAutoUpdate = false
+    modelTransformGroup.matrix.fromArray(
+      mat4.fromRotationTranslationScale(
+        new Float64Array(16),
+        modelQuaternion,
+        modelOffset,
+        [scale ?? 1, scale ?? 1, scale ?? 1],
+      ),
+    )
+    modelTransformGroup.matrixWorldNeedsUpdate = true
 
     if (!model) {
       fitTransformGroup.scale.set(1, 1, 1)
@@ -124,6 +158,7 @@ export const useCadModelTransformGraph = ({
     fitTransformGroup.scale.set(fitScale[0], fitScale[1], fitScale[2])
   }, [
     boardTransformGroup,
+    cadPlacement,
     fitTransformGroup,
     model,
     modelFitMode,
@@ -135,6 +170,7 @@ export const useCadModelTransformGraph = ({
     position,
     rotation,
     scale,
+    sourceCoordinateTransform,
   ])
 
   return { boardTransformGroup }
