@@ -9,11 +9,35 @@ import * as THREE from "three"
 import * as jscadModeling from "@jscad/modeling"
 import { load3DModel } from "./load-model"
 import type { CadComponent } from "circuit-json"
+import {
+  getCadModelObjectMatrix,
+  getCadModelTransform,
+} from "./cad-model-transform"
+import type { RenderedCadModelType } from "./get-cad-model-type"
 
 export async function renderComponent(
   component: CadComponent,
   scene: THREE.Scene,
+  options: { layer: string; pcbThickness: number } = {
+    layer: "top",
+    pcbThickness: 1.6,
+  },
 ) {
+  const addPlacedModel = (
+    model: THREE.Object3D,
+    modelType: RenderedCadModelType,
+  ) => {
+    const group = new THREE.Group()
+    group.matrixAutoUpdate = false
+    group.matrix.copy(
+      getCadModelObjectMatrix(
+        model,
+        getCadModelTransform(component, { ...options, modelType }).placement,
+      ),
+    )
+    group.add(model)
+    scene.add(group)
+  }
   // Handle STL/OBJ models first
   const url =
     component.model_obj_url ??
@@ -24,21 +48,16 @@ export async function renderComponent(
   if (url) {
     const model = await load3DModel(url)
     if (model) {
-      if (component.position) {
-        model.position.set(
-          component.position.x ?? 0,
-          component.position.y ?? 0,
-          (component.position.z ?? 0) + 0.5,
-        )
-      }
-      if (component.rotation) {
-        model.rotation.set(
-          THREE.MathUtils.degToRad(component.rotation.x ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.y ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.z ?? 0),
-        )
-      }
-      scene.add(model)
+      addPlacedModel(
+        model,
+        component.model_obj_url
+          ? "obj"
+          : component.model_wrl_url
+            ? "wrl"
+            : component.model_stl_url
+              ? "stl"
+              : "glb",
+      )
       return
     }
   }
@@ -59,21 +78,7 @@ export async function renderComponent(
       })
       const mesh = new THREE.Mesh(threeGeom, material)
 
-      if (component.position) {
-        mesh.position.set(
-          component.position.x ?? 0,
-          component.position.y ?? 0,
-          (component.position.z ?? 0) + 0.5,
-        )
-      }
-      if (component.rotation) {
-        mesh.rotation.set(
-          THREE.MathUtils.degToRad(component.rotation.x ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.y ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.z ?? 0),
-        )
-      }
-      scene.add(mesh)
+      addPlacedModel(mesh, "jscad")
     }
     return
   }
@@ -85,7 +90,8 @@ export async function renderComponent(
       jscadModeling,
     )
 
-    // Process each operation from the footprinter
+    const group = new THREE.Group()
+    // Fit the complete footprint, not each colored solid independently.
     for (const geomInfo of geometries.flat(Infinity) as any[]) {
       const geom = geomInfo.geom
       if (!geom || (!geom.polygons && !geom.sides)) {
@@ -105,22 +111,9 @@ export async function renderComponent(
       })
       const mesh = new THREE.Mesh(threeGeom, material)
 
-      if (component.position) {
-        mesh.position.set(
-          component.position.x ?? 0,
-          component.position.y ?? 0,
-          (component.position.z ?? 0) + 0.5,
-        )
-      }
-      if (component.rotation) {
-        mesh.rotation.set(
-          THREE.MathUtils.degToRad(component.rotation.x ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.y ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.z ?? 0),
-        )
-      }
-      scene.add(mesh)
+      group.add(mesh)
     }
+    if (group.children.length) addPlacedModel(group, "footprinter")
     return
   }
 

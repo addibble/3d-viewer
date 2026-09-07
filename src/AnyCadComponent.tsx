@@ -169,6 +169,13 @@ export const AnyCadComponent = ({
         <GltfModel
           key={`${cad_component.cad_component_id}-gltf-${gltfUrl}`}
           gltfUrl={gltfUrl}
+          cadPlacement={
+            getCadModelTransform(cad_component, {
+              layer,
+              pcbThickness,
+              modelType: gltfModelType,
+            }).placement
+          }
           position={adjustedPosition}
           rotation={rotationOffset}
           modelOffset={modelTransform.modelPosition}
@@ -192,6 +199,13 @@ export const AnyCadComponent = ({
         <MixedStlModel
           key={`${cad_component.cad_component_id}-mixed-${url}`}
           url={url}
+          cadPlacement={
+            getCadModelTransform(cad_component, {
+              layer,
+              pcbThickness,
+              modelType: meshModelType,
+            }).placement
+          }
           position={adjustedPosition}
           rotation={rotationOffset}
           modelOffset={modelTransform.modelPosition}
@@ -219,6 +233,13 @@ export const AnyCadComponent = ({
         <StepModel
           key={`${cad_component.cad_component_id}-step-${stepUrl}`}
           stepUrl={stepUrl}
+          cadPlacement={
+            getCadModelTransform(cad_component, {
+              layer,
+              pcbThickness,
+              modelType: "glb",
+            }).placement
+          }
           position={adjustedPosition}
           rotation={rotationOffset}
           modelOffset={modelTransform.modelPosition}
@@ -240,6 +261,9 @@ export const AnyCadComponent = ({
     return components
   }, [
     adjustedPosition,
+    cad_component,
+    layer,
+    pcbThickness,
     cad_component.cad_component_id,
     cad_component.footprinter_string,
     cad_component.model_jscad,
@@ -294,6 +318,13 @@ export const AnyCadComponent = ({
       <JscadModel
         key={cad_component.cad_component_id}
         jscadPlan={cad_component.model_jscad}
+        cadPlacement={
+          getCadModelTransform(cad_component, {
+            layer,
+            pcbThickness,
+            modelType: "jscad",
+          }).placement
+        }
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         modelOffset={modelTransform.modelPosition}
@@ -316,6 +347,13 @@ export const AnyCadComponent = ({
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
+        cadPlacement={
+          getCadModelTransform(cad_component, {
+            layer,
+            pcbThickness,
+            modelType: "footprinter",
+          }).placement
+        }
         scale={modelTransform.scale}
         onHover={handleHover}
         onUnhover={handleUnhover}

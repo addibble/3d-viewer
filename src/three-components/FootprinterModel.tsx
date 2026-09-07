@@ -5,9 +5,10 @@ import {
 import { useMemo, useEffect } from "react"
 import * as jscadModeling from "@jscad/modeling"
 import * as THREE from "three"
-import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
+import type { CadModelPlacementInput } from "src/utils/cad-model-transform"
+import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export const FootprinterModel = ({
   positionOffset,
@@ -17,6 +18,7 @@ export const FootprinterModel = ({
   onUnhover,
   isHovered,
   scale,
+  cadPlacement,
   isTranslucent = false,
 }: {
   positionOffset: any
@@ -26,9 +28,9 @@ export const FootprinterModel = ({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  cadPlacement?: CadModelPlacementInput
   isTranslucent?: boolean
 }) => {
-  const { rootObject } = useThree()
   const group = useMemo(() => {
     if (!footprint) return null
     const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
@@ -64,29 +66,13 @@ export const FootprinterModel = ({
     return group
   }, [footprint, isTranslucent])
 
-  useEffect(() => {
-    if (!group || !rootObject) return
-    rootObject.add(group)
-    return () => {
-      rootObject.remove(group)
-    }
-  }, [rootObject, group])
-
-  useEffect(() => {
-    if (!group) return
-    if (positionOffset) group.position.fromArray(positionOffset)
-    if (rotationOffset) group.rotation.fromArray(rotationOffset)
-    if (scale !== undefined) group.scale.setScalar(scale)
-  }, [
-    group,
-    positionOffset?.[0],
-    positionOffset?.[1],
-    positionOffset?.[2],
-    rotationOffset?.[0],
-    rotationOffset?.[1],
-    rotationOffset?.[2],
+  const { boardTransformGroup } = useCadModelTransformGraph({
+    model: group,
+    position: positionOffset,
+    rotation: rotationOffset,
     scale,
-  ])
+    cadPlacement,
+  })
 
   useEffect(() => {
     if (!group) return
@@ -112,7 +98,7 @@ export const FootprinterModel = ({
       isHovered={isHovered}
       onHover={onHover}
       onUnhover={onUnhover}
-      object={group}
+      object={boardTransformGroup}
     >
       {/* group is now added imperatively */}
     </ContainerWithTooltip>

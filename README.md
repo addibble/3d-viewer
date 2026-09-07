@@ -178,6 +178,31 @@ For more complex or programmatically defined models, you can use JSCAD:
 />
 ```
 
+## CAD placement coordinates
+
+The viewer's model graph uses Circuit JSON's **Z-up, millimeter** world frame.
+Loaders retain responsibility for native format decoding and coordinate
+normalization. Their explicit native-to-canonical matrix and measured model
+bounds are passed to `getCadModelPlacement` from
+`@tscircuit/circuit-json-util`; the resulting matrix is installed directly on
+the Three group with `matrixAutoUpdate = false`.
+
+Model origin coordinates belong to the source asset, not the scene target.
+Authored size is in millimeters along the asset's native axes before board-normal
+alignment; model unit conversion applies to native vertices and origins, not the
+target size:
+a `6 x 4 x 20` model with `model_board_normal_direction: "y+"` occupies
+`6 x 20 x 4` in the board-aligned frame. Origin, units, fitting, normal alignment,
+and the final CAD rotation/position therefore affect the same geometry.
+Board-surface alignment measures the actual contact vertices, except generated
+footprinter models supply their known zero board datum so through-hole pin tips
+are not mistaken for the mounting surface. Authored origins still take precedence.
+Legacy exported position/Euler fields remain available, but the CAD graph does not decompose and
+recompose its placement through them. JSCAD matrix plans use the public
+`jscad-planner` interpreter.
+The legacy fit helper retains ratio 1 for flat axes; full CAD placement uses the
+shared resolver's native-size contract.
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for more details.

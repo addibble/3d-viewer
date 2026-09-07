@@ -6,6 +6,7 @@ import * as THREE from "three"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
+import type { CadModelPlacementInput } from "src/utils/cad-model-transform"
 
 export function MixedStlModel({
   url,
@@ -20,6 +21,7 @@ export function MixedStlModel({
   onUnhover,
   isHovered,
   scale,
+  cadPlacement,
   isTranslucent = false,
 }: {
   url: string
@@ -34,6 +36,7 @@ export function MixedStlModel({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  cadPlacement?: CadModelPlacementInput
   isTranslucent?: boolean
 }) {
   const obj = useGlobalObjLoader(url)
@@ -96,6 +99,7 @@ export function MixedStlModel({
     modelSize,
     modelFitMode,
     scale,
+    cadPlacement,
   })
 
   if (obj instanceof Error) {

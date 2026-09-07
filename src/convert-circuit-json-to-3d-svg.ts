@@ -90,7 +90,12 @@ export async function convertCircuitJsonTo3dSvg(
   // Add components
   const components = su(circuitJson).cad_component.list()
   for (const component of components) {
-    await renderComponent(component, scene)
+    const pcb = su(circuitJson).pcb_component.get(component.pcb_component_id)
+    const board = su(circuitJson).pcb_board.list()[0]
+    await renderComponent(component, scene, {
+      layer: pcb?.layer ?? "top",
+      pcbThickness: board?.thickness ?? 1.6,
+    })
   }
 
   const boards = su(circuitJson).pcb_board.list()

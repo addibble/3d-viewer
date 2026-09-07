@@ -7,6 +7,7 @@ import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentM
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
+import type { CadModelPlacementInput } from "src/utils/cad-model-transform"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
 
@@ -23,6 +24,7 @@ export function GltfModel({
   onUnhover,
   isHovered,
   scale,
+  cadPlacement,
   isTranslucent = false,
 }: {
   gltfUrl: string
@@ -37,6 +39,7 @@ export function GltfModel({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  cadPlacement?: CadModelPlacementInput
   isTranslucent?: boolean
 }) {
   const { renderer } = useThree()
@@ -52,6 +55,7 @@ export function GltfModel({
     modelSize,
     modelFitMode,
     scale,
+    cadPlacement,
   })
 
   useEffect(() => {
