@@ -8,6 +8,7 @@ import * as THREE from "three"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
+import { getFootprinterModelColor } from "src/utils/get-footprinter-model-color"
 
 export const FootprinterModel = ({
   positionOffset,
@@ -40,14 +41,7 @@ export const FootprinterModel = ({
       if (!geom || (!geom.polygons && !geom.sides)) {
         continue
       }
-      // JSCAD RGBA arrays already contain linear RGB, unlike CSS colors.
-      const color = Array.isArray(geomInfo.color)
-        ? new THREE.Color().setRGB(
-            geomInfo.color[0],
-            geomInfo.color[1],
-            geomInfo.color[2],
-          )
-        : new THREE.Color(geomInfo.color).convertLinearToSRGB()
+      const color = getFootprinterModelColor(geomInfo.color)
       const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
 
       const threeGeom = convertCSGToThreeGeom(geomWithColor)

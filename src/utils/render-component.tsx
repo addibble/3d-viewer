@@ -9,6 +9,7 @@ import * as THREE from "three"
 import * as jscadModeling from "@jscad/modeling"
 import { load3DModel } from "./load-model"
 import type { CadComponent } from "circuit-json"
+import { getFootprinterModelColor } from "./get-footprinter-model-color"
 
 export async function renderComponent(
   component: CadComponent,
@@ -92,8 +93,7 @@ export async function renderComponent(
         continue
       }
 
-      const color = new THREE.Color(geomInfo.color)
-      color.convertLinearToSRGB()
+      const color = getFootprinterModelColor(geomInfo.color)
       const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
 
       const threeGeom = convertCSGToThreeGeom(geomWithColor)
