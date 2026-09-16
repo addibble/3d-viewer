@@ -31,6 +31,8 @@
     "test:node-bundle": "node ./scripts/load-bundle-in-node.js"
   },
   "dependencies": {
+    "@tscircuit/jscad-assembly-hardware": "^0.0.1",
+    "@tscircuit/modelprinter": "^0.0.2",
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
     "circuit-json": "^0.0.465",

@@ -40,8 +40,14 @@ export const FootprinterModel = ({
       if (!geom || (!geom.polygons && !geom.sides)) {
         continue
       }
-      const color = new THREE.Color(geomInfo.color)
-      color.convertLinearToSRGB()
+      // JSCAD RGBA arrays already contain linear RGB, unlike CSS colors.
+      const color = Array.isArray(geomInfo.color)
+        ? new THREE.Color().setRGB(
+            geomInfo.color[0],
+            geomInfo.color[1],
+            geomInfo.color[2],
+          )
+        : new THREE.Color(geomInfo.color).convertLinearToSRGB()
       const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
 
       const threeGeom = convertCSGToThreeGeom(geomWithColor)

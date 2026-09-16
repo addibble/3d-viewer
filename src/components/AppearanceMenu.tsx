@@ -453,6 +453,38 @@ export const AppearanceMenu = () => {
                 Enclosure
               </span>
             </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "assemblyHardware"
+                    ? "#404040"
+                    : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility(
+                  "assemblyHardware",
+                  nextEnclosureVisibility(visibility.assemblyHardware),
+                )
+              }}
+              onMouseEnter={() => setHoveredItem("assemblyHardware")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("assemblyHardware")}
+              title={`Assembly hardware: ${visibility.assemblyHardware}`}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.assemblyHardware === "opaque" && <CheckIcon />}
+                {visibility.assemblyHardware === "translucent" && (
+                  <CheckMinusIcon />
+                )}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Assembly Hardware
+              </span>
+            </DropdownMenu.Item>
           </DropdownMenu.SubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>

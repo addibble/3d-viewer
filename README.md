@@ -19,6 +19,17 @@ A 3D printed circuit board viewer for [Circuit JSON](https://github.com/tscircui
 - Support for various PCB components (resistors, capacitors, Chips, etc.)
 - Customizable board and component rendering
 
+### Mounting hardware
+
+Screw, bolt, heat-set insert, and spacer modelprinter strings travel through
+`cad_component.footprinter_string` and render using `jscad-electronics`.
+Their catalogue material colors are preserved. The **Assembly Hardware**
+Appearance control cycles opaque, translucent, and hidden independently of the
+enclosure and electronic components.
+
+Generated hardware uses explicit native-datum `position` and XYZ Euler
+`rotation` from core, rather than a separate CAD geometry format.
+
 ## Installation
 
 ```bash
