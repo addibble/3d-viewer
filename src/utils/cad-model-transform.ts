@@ -46,9 +46,9 @@ export function getCadModelTransform(
         cadComponent.position.x,
         cadComponent.position.y,
         !cadComponent.is_on_folded_board &&
-          cadComponent.pcb_component_id &&
-          options.layer === "bottom" &&
-          cadComponent.position.z >= 0
+        cadComponent.pcb_component_id &&
+        options.layer === "bottom" &&
+        cadComponent.position.z >= 0
           ? -(cadComponent.position.z + options.pcbThickness)
           : cadComponent.position.z,
       ]
